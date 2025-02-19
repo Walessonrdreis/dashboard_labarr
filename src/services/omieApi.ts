@@ -85,15 +85,40 @@ export const OmieApiService = {
 
   // Consultar produto detalhado
   consultarProduto: async (codigoProduto: number): Promise<OmieProduto> => {
-    const response = await omieApi.post('/geral/produtos/', {
-      call: 'ConsultarProduto',
-      app_key: import.meta.env.VITE_OMIE_APP_KEY,
-      app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
-      param: [{
-        codigo_produto: codigoProduto,
-      }]
-    });
-    return response.data.produto_servico_cadastro;
+    try {
+      if (!codigoProduto || isNaN(codigoProduto)) {
+        throw new Error('Código do produto inválido');
+      }
+
+      console.log('Consultando produto - Código:', codigoProduto, 'Tipo:', typeof codigoProduto);
+
+      // Vamos direto para a consulta do produto
+      const response = await omieApi.post('/geral/produtos/', {
+        call: 'ConsultarProduto',
+        app_key: import.meta.env.VITE_OMIE_APP_KEY,
+        app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
+        param: [{
+          codigo_produto: codigoProduto
+        }]
+      });
+
+      console.log('Resposta da API:', {
+        status: response.status,
+        data: response.data
+      });
+
+      if (!response.data) {
+        throw new Error('Produto não encontrado ou resposta inválida da API');
+      }
+
+      return response.data;
+    } catch (error: unknown) {
+      console.error('Erro ao consultar produto:', {
+        error,
+        message: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+      throw error;
+    }
   },
 
   // Incluir produto

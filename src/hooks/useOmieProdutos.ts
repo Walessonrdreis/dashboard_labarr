@@ -17,6 +17,8 @@ export const useOmieProdutos = (params?: UseProdutosParams) => {
       setLoading(true);
       setError(null);
       
+      console.log('Buscando produtos com filtros:', filtros);
+      
       const response = await OmieApiService.listarProdutos({
         ...params,
         ...filtros,
@@ -24,9 +26,12 @@ export const useOmieProdutos = (params?: UseProdutosParams) => {
         descricao: filtros?.busca || '',
       });
       
+      console.log('Resposta da listagem de produtos:', response);
+      
       setProdutos(response.produto_servico_resumido);
       setTotalRegistros(response.total_de_registros);
     } catch (err) {
+      console.error('Erro ao buscar produtos:', err);
       setError(err as OmieError);
       setProdutos([]);
       setTotalRegistros(0);

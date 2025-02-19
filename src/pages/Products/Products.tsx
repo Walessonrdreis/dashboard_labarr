@@ -139,27 +139,41 @@ const Products = () => {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {produtos.map((produto) => (
-                      <Tr 
-                        key={produto.codigo_produto}
-                        cursor="pointer"
-                        _hover={{ bg: 'gray.50' }}
-                        onClick={() => navigate(`/products/${produto.codigo_produto}`)}
-                      >
-                        <Td width="100px">{produto.codigo_produto}</Td>
-                        <Td>
-                          <Text fontWeight="medium">{produto.descricao}</Text>
-                          {produto.codigo_produto_integracao && (
-                            <Text fontSize="sm" color="gray.500">
-                              Cód. Integração: {produto.codigo_produto_integracao}
-                            </Text>
-                          )}
-                        </Td>
-                        <Td isNumeric fontWeight="medium" color="brand.500">
-                          {formatCurrency(produto.valor_unitario)}
-                        </Td>
-                      </Tr>
-                    ))}
+                    {produtos.map((produto) => {
+                      console.log('Produto na listagem:', produto);
+                      return (
+                        <Tr 
+                          key={produto.codigo_produto}
+                          cursor="pointer"
+                          _hover={{ bg: 'gray.50' }}
+                          onClick={() => {
+                            const codigoProduto = produto.codigo_produto;
+                            console.log('Clicou no produto - Código:', codigoProduto, 'Tipo:', typeof codigoProduto);
+                            console.log('Produto completo:', produto);
+                            
+                            if (!codigoProduto || isNaN(Number(codigoProduto))) {
+                              console.error('Código do produto inválido:', codigoProduto);
+                              return;
+                            }
+                            
+                            navigate(`/products/${codigoProduto}`);
+                          }}
+                        >
+                          <Td width="100px">{produto.codigo_produto}</Td>
+                          <Td>
+                            <Text fontWeight="medium">{produto.descricao}</Text>
+                            {produto.codigo_produto_integracao && (
+                              <Text fontSize="sm" color="gray.500">
+                                Cód. Integração: {produto.codigo_produto_integracao}
+                              </Text>
+                            )}
+                          </Td>
+                          <Td isNumeric fontWeight="medium" color="brand.500">
+                            {formatCurrency(produto.valor_unitario)}
+                          </Td>
+                        </Tr>
+                      );
+                    })}
                   </Tbody>
                 </Table>
               </Box>

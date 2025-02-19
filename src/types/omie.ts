@@ -1,8 +1,27 @@
 export interface OmieProduto {
   codigo_produto: number;
   codigo_produto_integracao?: string;
+  codigo?: string;
   descricao: string;
+  unidade: string;
+  ncm?: string;
+  ean?: string;
   valor_unitario: number;
+  codigo_familia?: number;
+  descricao_familia?: string;
+  marca?: string;
+  modelo?: string;
+  altura?: number;
+  largura?: number;
+  profundidade?: number;
+  peso_liq?: number;
+  peso_bruto?: number;
+  estoque_minimo?: number;
+  estoque_maximo?: number;
+  obs?: string;
+  quantidade_estoque?: number;
+  importado_api?: "S" | "N";
+  inativo?: "S" | "N";
 }
 
 export interface OmieProdutoResumido {

@@ -1,77 +1,124 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
-  Heading,
+  Grid,
   Text,
+  Heading,
+  Spinner,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Button,
   VStack,
   HStack,
-  Badge,
-  Button,
   Divider,
-  Spinner,
-  useToast,
+  Badge,
   SimpleGrid,
 } from '@chakra-ui/react';
-import { FiArrowLeft, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft } from 'react-icons/fi';
 import Layout from '../../../components/Layout/Layout';
 import Card from '../../../components/Card/Card';
 import { OmieProduto } from '../../../types/omie';
 import OmieApiService from '../../../services/omieApi';
 import { formatCurrency } from '../../../utils/formatters';
 
+interface InfoProduto {
+  dAlt: string;
+  dInc: string;
+  hAlt: string;
+  hInc: string;
+  uAlt: string;
+  uInc: string;
+}
+
+interface RecomendacoesFiscais {
+  cnpj_fabricante: string;
+  cupom_fiscal: string;
+  id_cest: string;
+  id_preco_tabelado: number;
+  indicador_escala: string;
+  market_place: string;
+  origem_mercadoria: string;
+}
+
+interface ProdutoDetalhado extends OmieProduto {
+  aliquota_cofins: number;
+  aliquota_ibpt: number;
+  aliquota_icms: number;
+  aliquota_pis: number;
+  bloqueado: 'S' | 'N';
+  bloquear_exclusao: 'S' | 'N';
+  cest: string;
+  cfop: string;
+  codInt_familia: string;
+  codigo_beneficio: string;
+  csosn_icms: string;
+  cst_cofins: string;
+  cst_icms: string;
+  cst_pis: string;
+  descr_detalhada: string;
+  dias_crossdocking: number;
+  dias_garantia: number;
+  exibir_descricao_nfe: 'S' | 'N';
+  exibir_descricao_pedido: 'S' | 'N';
+  info: InfoProduto;
+  lead_time: number;
+  motivo_deson_icms: string;
+  obs_internas: string;
+  per_icms_fcp: number;
+  recomendacoes_fiscais: RecomendacoesFiscais;
+  red_base_cofins: number;
+  red_base_icms: number;
+  red_base_pis: number;
+  tipoItem: string;
+}
+
 const ProdutoDetalhe = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const toast = useToast();
-  const [produto, setProduto] = useState<OmieProduto | null>(null);
+  const [produto, setProduto] = useState<ProdutoDetalhado | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const carregarProduto = async () => {
       try {
         setLoading(true);
-        if (id) {
-          const response = await OmieApiService.consultarProduto(Number(id));
-          setProduto(response);
+        console.log('ID recebido do useParams:', id);
+        
+        if (!id) {
+          throw new Error('Código do produto não fornecido');
         }
-      } catch (error: any) {
-        toast({
-          title: 'Erro ao carregar produto',
-          description: error.description || 'Não foi possível carregar os detalhes do produto',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
+
+        const codigoProduto = Number(id);
+        
+        if (isNaN(codigoProduto)) {
+          throw new Error('Código do produto inválido - não é um número');
+        }
+
+        console.log('Código do produto convertido:', codigoProduto, 'Tipo:', typeof codigoProduto);
+        
+        const data = await OmieApiService.consultarProduto(codigoProduto);
+        console.log('Dados do produto recebidos:', data);
+        
+        if (!data) {
+          throw new Error('Produto não encontrado');
+        }
+        
+        setProduto(data as ProdutoDetalhado);
+      } catch (err: any) {
+        console.error('Erro ao carregar produto:', err);
+        const errorMessage = err.description || err.message || 'Erro ao carregar dados do produto';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
     carregarProduto();
-  }, [id, toast]);
-
-  const handleExcluir = async () => {
-    if (!produto) return;
-
-    try {
-      await OmieApiService.excluirProduto(produto.codigo_produto);
-      toast({
-        title: 'Produto excluído',
-        description: 'O produto foi excluído com sucesso',
-        status: 'success',
-        duration: 3000,
-      });
-      navigate('/products');
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao excluir',
-        description: error.description || 'Não foi possível excluir o produto',
-        status: 'error',
-        duration: 5000,
-      });
-    }
-  };
+  }, [id]);
 
   if (loading) {
     return (
@@ -83,17 +130,30 @@ const ProdutoDetalhe = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Layout>
+        <Alert status="error" mb={6} borderRadius="lg">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Erro ao carregar produto</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Box>
+        </Alert>
+      </Layout>
+    );
+  }
+
   if (!produto) {
     return (
       <Layout>
-        <Card title="Produto não encontrado">
-          <VStack spacing={4} align="stretch">
-            <Text>O produto solicitado não foi encontrado.</Text>
-            <Button leftIcon={<FiArrowLeft />} onClick={() => navigate('/products')}>
-              Voltar para lista
-            </Button>
-          </VStack>
-        </Card>
+        <Alert status="warning" mb={6} borderRadius="lg">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Produto não encontrado</AlertTitle>
+            <AlertDescription>O produto solicitado não foi encontrado.</AlertDescription>
+          </Box>
+        </Alert>
       </Layout>
     );
   }
@@ -101,93 +161,273 @@ const ProdutoDetalhe = () => {
   return (
     <Layout>
       <VStack spacing={6} align="stretch">
-        <HStack justify="space-between">
+        <HStack>
           <Button
             leftIcon={<FiArrowLeft />}
             variant="ghost"
             onClick={() => navigate('/products')}
           >
-            Voltar para lista
+            Voltar
           </Button>
-          <HStack>
-            <Button
-              leftIcon={<FiEdit2 />}
-              colorScheme="blue"
-              onClick={() => navigate(`/products/edit/${produto.codigo_produto}`)}
-            >
-              Editar
-            </Button>
-            <Button
-              leftIcon={<FiTrash2 />}
-              colorScheme="red"
-              onClick={handleExcluir}
-            >
-              Excluir
-            </Button>
-          </HStack>
         </HStack>
 
-        <Card title="Detalhes do Produto">
+        <Card title={produto.descricao}>
           <VStack spacing={6} align="stretch">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <Box>
-                <Text color="gray.500" fontSize="sm">Código do Produto</Text>
-                <Text fontSize="lg" fontWeight="medium">{produto.codigo_produto}</Text>
-              </Box>
-              
-              {produto.codigo_produto_integracao && (
-                <Box>
-                  <Text color="gray.500" fontSize="sm">Código de Integração</Text>
-                  <Text fontSize="lg" fontWeight="medium">{produto.codigo_produto_integracao}</Text>
-                </Box>
-              )}
-            </SimpleGrid>
-
+            {/* Informações Básicas */}
             <Box>
-              <Text color="gray.500" fontSize="sm">Descrição</Text>
-              <Text fontSize="lg" fontWeight="medium">{produto.descricao}</Text>
+              <Heading size="md" mb={4}>Informações Básicas</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Código</Text>
+                  <Text>{produto.codigo}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Código do Produto</Text>
+                  <Text>{produto.codigo_produto}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Valor Unitário</Text>
+                  <Text color="brand.500" fontWeight="bold">
+                    {formatCurrency(produto.valor_unitario)}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Marca</Text>
+                  <Text>{produto.marca || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Modelo</Text>
+                  <Text>{produto.modelo || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Unidade</Text>
+                  <Text>{produto.unidade}</Text>
+                </Box>
+              </SimpleGrid>
             </Box>
-
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <Box>
-                <Text color="gray.500" fontSize="sm">Valor Unitário</Text>
-                <Text fontSize="2xl" fontWeight="bold" color="brand.500">
-                  {formatCurrency(produto.valor_unitario)}
-                </Text>
-              </Box>
-
-              <Box>
-                <Text color="gray.500" fontSize="sm">Status</Text>
-                <Badge
-                  colorScheme="green"
-                  fontSize="md"
-                  px={3}
-                  py={1}
-                  borderRadius="full"
-                >
-                  Ativo
-                </Badge>
-              </Box>
-            </SimpleGrid>
 
             <Divider />
 
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-              <Box>
-                <Text color="gray.500" fontSize="sm">Unidade</Text>
-                <Text fontSize="lg">{produto.unidade || 'UN'}</Text>
-              </Box>
-              
-              <Box>
-                <Text color="gray.500" fontSize="sm">NCM</Text>
-                <Text fontSize="lg">{produto.ncm || 'Não informado'}</Text>
-              </Box>
+            {/* Dimensões e Peso */}
+            <Box>
+              <Heading size="md" mb={4}>Dimensões e Peso</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Altura</Text>
+                  <Text>{produto.altura || '-'} cm</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Largura</Text>
+                  <Text>{produto.largura || '-'} cm</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Profundidade</Text>
+                  <Text>{produto.profundidade || '-'} cm</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Peso Líquido</Text>
+                  <Text>{produto.peso_liq || '-'} kg</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Peso Bruto</Text>
+                  <Text>{produto.peso_bruto || '-'} kg</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
 
-              <Box>
-                <Text color="gray.500" fontSize="sm">EAN</Text>
-                <Text fontSize="lg">{produto.ean || 'Não informado'}</Text>
-              </Box>
-            </SimpleGrid>
+            <Divider />
+
+            {/* Estoque */}
+            <Box>
+              <Heading size="md" mb={4}>Informações de Estoque</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Quantidade em Estoque</Text>
+                  <Text>{produto.quantidade_estoque || 0}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Estoque Mínimo</Text>
+                  <Text>{produto.estoque_minimo || 0}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Lead Time</Text>
+                  <Text>{produto.lead_time || 0} dias</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Dias Crossdocking</Text>
+                  <Text>{produto.dias_crossdocking || 0} dias</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Dias Garantia</Text>
+                  <Text>{produto.dias_garantia || 0} dias</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Informações Fiscais */}
+            <Box>
+              <Heading size="md" mb={4}>Informações Fiscais</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">NCM</Text>
+                  <Text>{produto.ncm || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">CEST</Text>
+                  <Text>{produto.cest || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">CFOP</Text>
+                  <Text>{produto.cfop || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">EAN</Text>
+                  <Text>{produto.ean || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Tipo Item</Text>
+                  <Text>{produto.tipoItem || '-'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Alíquotas */}
+            <Box>
+              <Heading size="md" mb={4}>Alíquotas</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">ICMS</Text>
+                  <Text>{produto.aliquota_icms}%</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">PIS</Text>
+                  <Text>{produto.aliquota_pis}%</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">COFINS</Text>
+                  <Text>{produto.aliquota_cofins}%</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">IBPT</Text>
+                  <Text>{produto.aliquota_ibpt}%</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">ICMS FCP</Text>
+                  <Text>{produto.per_icms_fcp}%</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Status */}
+            <Box>
+              <Heading size="md" mb={4}>Status</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Status</Text>
+                  <Badge colorScheme={produto.inativo === 'N' ? 'green' : 'red'}>
+                    {produto.inativo === 'N' ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Bloqueado</Text>
+                  <Badge colorScheme={produto.bloqueado === 'N' ? 'green' : 'red'}>
+                    {produto.bloqueado === 'N' ? 'Não' : 'Sim'}
+                  </Badge>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Importado API</Text>
+                  <Badge colorScheme={produto.importado_api === 'S' ? 'blue' : 'gray'}>
+                    {produto.importado_api === 'S' ? 'Sim' : 'Não'}
+                  </Badge>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Informações Adicionais */}
+            <Box>
+              <Heading size="md" mb={4}>Informações Adicionais</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Família</Text>
+                  <Text>{produto.descricao_familia || '-'}</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    Código: {produto.codigo_familia || '-'}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Código Integração</Text>
+                  <Text>{produto.codigo_produto_integracao || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Descrição Detalhada</Text>
+                  <Text>{produto.descr_detalhada || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Observações Internas</Text>
+                  <Text>{produto.obs_internas || '-'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Informações de Registro */}
+            <Box>
+              <Heading size="md" mb={4}>Informações de Registro</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Cadastrado em</Text>
+                  <Text>{produto.info.dInc} às {produto.info.hInc}</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    por {produto.info.uInc}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Última alteração</Text>
+                  <Text>{produto.info.dAlt} às {produto.info.hAlt}</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    por {produto.info.uAlt}
+                  </Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Recomendações Fiscais */}
+            <Box>
+              <Heading size="md" mb={4}>Recomendações Fiscais</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">CNPJ Fabricante</Text>
+                  <Text>{produto.recomendacoes_fiscais.cnpj_fabricante || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Cupom Fiscal</Text>
+                  <Badge colorScheme={produto.recomendacoes_fiscais.cupom_fiscal === 'S' ? 'green' : 'red'}>
+                    {produto.recomendacoes_fiscais.cupom_fiscal === 'S' ? 'Sim' : 'Não'}
+                  </Badge>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Marketplace</Text>
+                  <Badge colorScheme={produto.recomendacoes_fiscais.market_place === 'S' ? 'green' : 'red'}>
+                    {produto.recomendacoes_fiscais.market_place === 'S' ? 'Sim' : 'Não'}
+                  </Badge>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Origem da Mercadoria</Text>
+                  <Text>{produto.recomendacoes_fiscais.origem_mercadoria || '-'}</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
           </VStack>
         </Card>
       </VStack>

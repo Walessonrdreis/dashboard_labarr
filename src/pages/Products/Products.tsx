@@ -34,6 +34,7 @@ import Card from '../../components/Card/Card';
 import OmieConnectionTest from './components/OmieConnectionTest';
 import { useDebounce } from '../../hooks/useDebounce';
 import { formatCurrency } from '../../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,6 +55,8 @@ const Products = () => {
     registros_por_pagina: itemsPerPage,
     busca: debouncedSearch,
   });
+
+  const navigate = useNavigate();
 
   // Reset página quando mudar a busca
   useEffect(() => {
@@ -137,7 +140,12 @@ const Products = () => {
                   </Thead>
                   <Tbody>
                     {produtos.map((produto) => (
-                      <Tr key={produto.codigo_produto}>
+                      <Tr 
+                        key={produto.codigo_produto}
+                        cursor="pointer"
+                        _hover={{ bg: 'gray.50' }}
+                        onClick={() => navigate(`/products/${produto.codigo_produto}`)}
+                      >
                         <Td width="100px">{produto.codigo_produto}</Td>
                         <Td>
                           <Text fontWeight="medium">{produto.descricao}</Text>

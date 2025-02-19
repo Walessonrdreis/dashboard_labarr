@@ -9,6 +9,7 @@ const Analytics = lazy(() => import('./pages/Analytics/Analytics'));
 const Users = lazy(() => import('./pages/Users/Users'));
 const Settings = lazy(() => import('./pages/Settings/Settings'));
 const Products = lazy(() => import('./pages/Products/Products'));
+const ProdutoDetalhe = lazy(() => import('./pages/Products/components/ProdutoDetalhe'));
 
 // Componente de loading
 const Loading = () => (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProdutoDetalhe />} />
           </Routes>
         </Suspense>
       </Router>

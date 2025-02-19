@@ -2,7 +2,7 @@ import axios from 'axios';
 import { OmieProduto, OmieProdutoListaResponse, OmieProdutoFiltros, OmieError } from '../types/omie';
 
 const omieApi = axios.create({
-  baseURL: import.meta.env.VITE_OMIE_API_URL || 'https://app.omie.com.br/api/v1',
+  baseURL: '/api/omie',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -17,25 +17,45 @@ omieApi.interceptors.request.use((config) => {
     throw new Error('Credenciais da API do OMIE não configuradas');
   }
 
-  config.data = {
-    ...config.data,
-    app_key: appKey,
-    app_secret: appSecret,
-  };
+  // Log da requisição para debug
+  console.log('Request Config:', {
+    url: config.url,
+    method: config.method,
+    data: config.data,
+  });
 
   return config;
 });
 
 // Interceptor para tratamento de erros
 omieApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log da resposta para debug
+    console.log('Response:', response.data);
+    return response;
+  },
   (error) => {
-    const omieError: OmieError = error.response?.data?.error || {
-      code: 'UNKNOWN_ERROR',
-      description: 'Erro desconhecido ao acessar a API do OMIE',
-    };
+    // Log detalhado do erro
+    console.error('Erro na requisição:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: error.config,
+    });
 
-    return Promise.reject(omieError);
+    if (error.response) {
+      const omieError: OmieError = {
+        code: error.response.status.toString(),
+        description: error.response.data?.faultstring || 'Erro desconhecido ao acessar a API do OMIE',
+        referer: error.config?.url,
+      };
+      return Promise.reject(omieError);
+    }
+    
+    return Promise.reject({
+      code: 'NETWORK_ERROR',
+      description: 'Erro de conexão com a API do OMIE',
+    });
   }
 );
 
@@ -50,15 +70,16 @@ export const OmieApiService = {
         param: [{
           pagina: filtros.pagina || 1,
           registros_por_pagina: filtros.registros_por_pagina || 50,
-          apenas_importado_api: "N",
-          filtrar_apenas_descricao: filtros.filtrar_apenas_descricao || "N",
-          descricao: filtros.descricao || "",
+          apenas_importado_api: filtros.apenas_importado_api || "N",
+          filtrar_apenas_omiepdv: "N"
         }]
       });
 
+      // A resposta já vem no formato correto
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
+      console.error('Erro ao listar produtos:', error);
+      throw error;
     }
   },
 
@@ -66,9 +87,11 @@ export const OmieApiService = {
   consultarProduto: async (codigoProduto: number): Promise<OmieProduto> => {
     const response = await omieApi.post('/geral/produtos/', {
       call: 'ConsultarProduto',
+      app_key: import.meta.env.VITE_OMIE_APP_KEY,
+      app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
       param: [{
         codigo_produto: codigoProduto,
-      }],
+      }]
     });
     return response.data.produto_servico_cadastro;
   },
@@ -77,9 +100,11 @@ export const OmieApiService = {
   incluirProduto: async (produto: Omit<OmieProduto, 'codigo_produto'>): Promise<{ codigo_produto: number }> => {
     const response = await omieApi.post('/geral/produtos/', {
       call: 'IncluirProduto',
+      app_key: import.meta.env.VITE_OMIE_APP_KEY,
+      app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
       param: [{
         produto_servico_cadastro: produto,
-      }],
+      }]
     });
     return response.data;
   },
@@ -88,9 +113,11 @@ export const OmieApiService = {
   alterarProduto: async (produto: OmieProduto): Promise<{ codigo_produto: number }> => {
     const response = await omieApi.post('/geral/produtos/', {
       call: 'AlterarProduto',
+      app_key: import.meta.env.VITE_OMIE_APP_KEY,
+      app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
       param: [{
         produto_servico_cadastro: produto,
-      }],
+      }]
     });
     return response.data;
   },
@@ -99,9 +126,11 @@ export const OmieApiService = {
   excluirProduto: async (codigoProduto: number): Promise<void> => {
     await omieApi.post('/geral/produtos/', {
       call: 'ExcluirProduto',
+      app_key: import.meta.env.VITE_OMIE_APP_KEY,
+      app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
       param: [{
         codigo_produto: codigoProduto,
-      }],
+      }]
     });
   },
 };

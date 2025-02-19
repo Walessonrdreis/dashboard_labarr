@@ -25,7 +25,6 @@ export interface OmieProdutoFiltros {
   pagina?: number;
   registros_por_pagina?: number;
   apenas_importado_api?: 'S' | 'N';
-  filtrar_apenas_descricao?: 'S' | 'N';
   descricao?: string;
 }
 

@@ -149,7 +149,7 @@ const Products = () => {
                       
                       const temImagem = produto.imagens && Array.isArray(produto.imagens) && produto.imagens.length > 0;
                       if (temImagem) {
-                        console.log('URL da imagem:', produto.imagens[0].url_imagem);
+                        console.log('URL da imagem:', produto.imagens?.[0]?.url_imagem);
                       }
 
                       return (

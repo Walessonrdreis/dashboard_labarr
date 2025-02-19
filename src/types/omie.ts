@@ -35,6 +35,7 @@ export interface OmieProdutoResumido {
   descricao: string;
   valor_unitario: number;
   codigo: string;
+  imagens?: ImagemProduto[];
 }
 
 export interface OmieProdutoListaResponse {
@@ -42,7 +43,7 @@ export interface OmieProdutoListaResponse {
   total_de_paginas: number;
   registros: number;
   total_de_registros: number;
-  produto_servico_resumido: OmieProdutoResumido[];
+  produto_servico_cadastro: OmieProduto[];
 }
 
 export interface OmieProdutoFiltros {

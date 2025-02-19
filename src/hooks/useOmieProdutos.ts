@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { OmieProdutoResumido, OmieProdutoFiltros, OmieError } from '../types/omie';
+import { OmieProduto, OmieProdutoFiltros, OmieError } from '../types/omie';
 import OmieApiService from '../services/omieApi';
 
 interface UseProdutosParams extends OmieProdutoFiltros {
@@ -7,7 +7,7 @@ interface UseProdutosParams extends OmieProdutoFiltros {
 }
 
 export const useOmieProdutos = (params?: UseProdutosParams) => {
-  const [produtos, setProdutos] = useState<OmieProdutoResumido[]>([]);
+  const [produtos, setProdutos] = useState<OmieProduto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<OmieError | null>(null);
   const [totalRegistros, setTotalRegistros] = useState(0);
@@ -28,7 +28,7 @@ export const useOmieProdutos = (params?: UseProdutosParams) => {
       
       console.log('Resposta da listagem de produtos:', response);
       
-      setProdutos(response.produto_servico_resumido);
+      setProdutos(response.produto_servico_cadastro);
       setTotalRegistros(response.total_de_registros);
     } catch (err) {
       console.error('Erro ao buscar produtos:', err);

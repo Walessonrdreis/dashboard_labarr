@@ -21,12 +21,16 @@ import {
   ButtonGroup,
   InputGroup,
   InputLeftElement,
+  Image,
+  Center,
+  Icon,
 } from '@chakra-ui/react';
 import {
   FiSearch,
   FiRefreshCcw,
   FiChevronLeft,
   FiChevronRight,
+  FiImage,
 } from 'react-icons/fi';
 import { useOmieProdutos } from '../../hooks/useOmieProdutos';
 import Layout from '../../components/Layout/Layout';
@@ -141,6 +145,13 @@ const Products = () => {
                   <Tbody>
                     {produtos.map((produto) => {
                       console.log('Produto na listagem:', produto);
+                      console.log('Imagens do produto:', produto.imagens);
+                      
+                      const temImagem = produto.imagens && Array.isArray(produto.imagens) && produto.imagens.length > 0;
+                      if (temImagem) {
+                        console.log('URL da imagem:', produto.imagens[0].url_imagem);
+                      }
+
                       return (
                         <Tr 
                           key={produto.codigo_produto}
@@ -148,18 +159,46 @@ const Products = () => {
                           _hover={{ bg: 'gray.50' }}
                           onClick={() => {
                             const codigoProduto = produto.codigo_produto;
-                            console.log('Clicou no produto - Código:', codigoProduto, 'Tipo:', typeof codigoProduto);
-                            console.log('Produto completo:', produto);
-                            
                             if (!codigoProduto || isNaN(Number(codigoProduto))) {
                               console.error('Código do produto inválido:', codigoProduto);
                               return;
                             }
-                            
                             navigate(`/products/${codigoProduto}`);
                           }}
                         >
-                          <Td width="100px">{produto.codigo_produto}</Td>
+                          <Td width="60px" padding="2">
+                            <Box
+                              width="50px"
+                              height="50px"
+                              borderRadius="5px"
+                              overflow="hidden"
+                              bg="gray.100"
+                            >
+                              {produto.imagens && produto.imagens.length > 0 ? (
+                                <Image
+                                  src={produto.imagens[0]?.url_imagem}
+                                  alt={produto.descricao}
+                                  width="50px"
+                                  height="50px"
+                                  objectFit="cover"
+                                  onError={(e) => {
+                                    console.error('Erro ao carregar imagem:', produto.imagens?.[0]?.url_imagem);
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                  fallback={
+                                    <Center width="50px" height="50px">
+                                      <Icon as={FiImage} color="gray.400" />
+                                    </Center>
+                                  }
+                                />
+                              ) : (
+                                <Center width="50px" height="50px">
+                                  <Icon as={FiImage} color="gray.400" />
+                                </Center>
+                              )}
+                            </Box>
+                          </Td>
                           <Td>
                             <Text fontWeight="medium">{produto.descricao}</Text>
                             {produto.codigo_produto_integracao && (

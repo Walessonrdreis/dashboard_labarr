@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OmieProduto, OmieProdutoListaResponse, OmieProdutoFiltros, OmieError } from '../types/omie';
+import { OmieProduto, OmieProdutoListaResponse, OmieProdutoFiltros, OmieError, OmieProdutoResumido } from '../types/omie';
 
 const omieApi = axios.create({
   baseURL: '/api/omie',
@@ -64,7 +64,7 @@ export const OmieApiService = {
   listarProdutos: async (filtros: OmieProdutoFiltros = {}): Promise<OmieProdutoListaResponse> => {
     try {
       const response = await omieApi.post('/geral/produtos/', {
-        call: 'ListarProdutosResumido',
+        call: 'ListarProdutos',
         app_key: import.meta.env.VITE_OMIE_APP_KEY,
         app_secret: import.meta.env.VITE_OMIE_APP_SECRET,
         param: [{
@@ -75,7 +75,17 @@ export const OmieApiService = {
         }]
       });
 
-      // A resposta já vem no formato correto
+      console.log('Resposta da API ListarProdutos:', response.data);
+      
+      // Verificar se a estrutura da resposta está correta
+      const produtos = response.data.produto_servico_resumido;
+      if (produtos && Array.isArray(produtos)) {
+        produtos.forEach((produto: OmieProdutoResumido) => {
+          console.log('Produto:', produto.codigo_produto);
+          console.log('Imagens:', produto.imagens);
+        });
+      }
+
       return response.data;
     } catch (error) {
       console.error('Erro ao listar produtos:', error);

@@ -1,3 +1,7 @@
+export interface ImagemProduto {
+  url_imagem: string;
+}
+
 export interface OmieProduto {
   codigo_produto: number;
   codigo_produto_integracao?: string;
@@ -22,6 +26,7 @@ export interface OmieProduto {
   quantidade_estoque?: number;
   importado_api?: "S" | "N";
   inativo?: "S" | "N";
+  imagens?: ImagemProduto[];
 }
 
 export interface OmieProdutoResumido {

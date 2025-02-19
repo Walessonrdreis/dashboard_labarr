@@ -16,8 +16,11 @@ import {
   Divider,
   Badge,
   SimpleGrid,
+  Image,
+  Center,
+  Icon,
 } from '@chakra-ui/react';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiImage } from 'react-icons/fi';
 import Layout from '../../../components/Layout/Layout';
 import Card from '../../../components/Card/Card';
 import { OmieProduto } from '../../../types/omie';
@@ -73,6 +76,7 @@ interface ProdutoDetalhado extends OmieProduto {
   red_base_icms: number;
   red_base_pis: number;
   tipoItem: string;
+  url_imagem?: string;
 }
 
 const ProdutoDetalhe = () => {
@@ -102,6 +106,7 @@ const ProdutoDetalhe = () => {
         
         const data = await OmieApiService.consultarProduto(codigoProduto);
         console.log('Dados do produto recebidos:', data);
+        console.log('URL da imagem:', data.url_imagem);
         
         if (!data) {
           throw new Error('Produto não encontrado');
@@ -176,33 +181,92 @@ const ProdutoDetalhe = () => {
             {/* Informações Básicas */}
             <Box>
               <Heading size="md" mb={4}>Informações Básicas</Heading>
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                {/* Coluna da Imagem */}
                 <Box>
-                  <Text fontWeight="bold">Código</Text>
-                  <Text>{produto.codigo}</Text>
+                  {produto.imagens && produto.imagens.length > 0 ? (
+                    <Box
+                      borderRadius="lg"
+                      overflow="hidden"
+                      boxShadow="md"
+                      maxW="300px"
+                      mx="auto"
+                    >
+                      <Image
+                        src={produto.imagens[0].url_imagem}
+                        alt={produto.descricao}
+                        width="100%"
+                        height="auto"
+                        onError={() => {
+                          console.log('Erro ao carregar imagem:', produto.imagens?.[0].url_imagem);
+                        }}
+                        fallback={
+                          <Center p={8} bg="gray.100" borderRadius="lg">
+                            <VStack spacing={2}>
+                              <Icon as={FiImage} boxSize={12} color="gray.400" />
+                              <Text color="gray.500" fontSize="sm">
+                                Erro ao carregar imagem
+                              </Text>
+                            </VStack>
+                          </Center>
+                        }
+                      />
+                    </Box>
+                  ) : (
+                    <Center
+                      p={8}
+                      bg="gray.100"
+                      borderRadius="lg"
+                      maxW="300px"
+                      mx="auto"
+                    >
+                      <VStack spacing={2}>
+                        <Icon as={FiImage} boxSize={12} color="gray.400" />
+                        <Text color="gray.500" fontSize="sm">
+                          Imagem não disponível
+                        </Text>
+                      </VStack>
+                    </Center>
+                  )}
                 </Box>
-                <Box>
-                  <Text fontWeight="bold">Código do Produto</Text>
-                  <Text>{produto.codigo_produto}</Text>
-                </Box>
-                <Box>
-                  <Text fontWeight="bold">Valor Unitário</Text>
-                  <Text color="brand.500" fontWeight="bold">
-                    {formatCurrency(produto.valor_unitario)}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontWeight="bold">Marca</Text>
-                  <Text>{produto.marca || '-'}</Text>
-                </Box>
-                <Box>
-                  <Text fontWeight="bold">Modelo</Text>
-                  <Text>{produto.modelo || '-'}</Text>
-                </Box>
-                <Box>
-                  <Text fontWeight="bold">Unidade</Text>
-                  <Text>{produto.unidade}</Text>
-                </Box>
+
+                {/* Coluna dos Dados */}
+                <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
+                  <Box>
+                    <Text fontWeight="bold">Código</Text>
+                    <Text>{produto.codigo}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">Código do Produto</Text>
+                    <Text>{produto.codigo_produto}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">Valor Unitário</Text>
+                    <Text color="brand.500" fontWeight="bold">
+                      {formatCurrency(produto.valor_unitario)}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">Marca</Text>
+                    <Text>{produto.marca || '-'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">Modelo</Text>
+                    <Text>{produto.modelo || '-'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontWeight="bold">Unidade</Text>
+                    <Text>{produto.unidade}</Text>
+                  </Box>
+                  {produto.imagens && produto.imagens.length > 0 && (
+                    <Box>
+                      <Text fontWeight="bold">URL da Imagem</Text>
+                      <Text fontSize="sm" noOfLines={2}>
+                        {produto.imagens[0].url_imagem}
+                      </Text>
+                    </Box>
+                  )}
+                </SimpleGrid>
               </SimpleGrid>
             </Box>
 
@@ -290,6 +354,30 @@ const ProdutoDetalhe = () => {
                   <Text fontWeight="bold">Tipo Item</Text>
                   <Text>{produto.tipoItem || '-'}</Text>
                 </Box>
+                <Box>
+                  <Text fontWeight="bold">CST ICMS</Text>
+                  <Text>{produto.cst_icms || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">CSOSN ICMS</Text>
+                  <Text>{produto.csosn_icms || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">CST PIS</Text>
+                  <Text>{produto.cst_pis || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">CST COFINS</Text>
+                  <Text>{produto.cst_cofins || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Código Benefício</Text>
+                  <Text>{produto.codigo_beneficio || '-'}</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Motivo Deson. ICMS</Text>
+                  <Text>{produto.motivo_deson_icms || '-'}</Text>
+                </Box>
               </SimpleGrid>
             </Box>
 
@@ -324,6 +412,48 @@ const ProdutoDetalhe = () => {
 
             <Divider />
 
+            {/* Reduções de Base */}
+            <Box>
+              <Heading size="md" mb={4}>Reduções de Base</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Red. Base ICMS</Text>
+                  <Text>{produto.red_base_icms}%</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Red. Base PIS</Text>
+                  <Text>{produto.red_base_pis}%</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Red. Base COFINS</Text>
+                  <Text>{produto.red_base_cofins}%</Text>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
+            {/* Configurações de Exibição */}
+            <Box>
+              <Heading size="md" mb={4}>Configurações de Exibição</Heading>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Box>
+                  <Text fontWeight="bold">Exibir Descrição na NFe</Text>
+                  <Badge colorScheme={produto.exibir_descricao_nfe === 'S' ? 'green' : 'red'}>
+                    {produto.exibir_descricao_nfe === 'S' ? 'Sim' : 'Não'}
+                  </Badge>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Exibir Descrição no Pedido</Text>
+                  <Badge colorScheme={produto.exibir_descricao_pedido === 'S' ? 'green' : 'red'}>
+                    {produto.exibir_descricao_pedido === 'S' ? 'Sim' : 'Não'}
+                  </Badge>
+                </Box>
+              </SimpleGrid>
+            </Box>
+
+            <Divider />
+
             {/* Status */}
             <Box>
               <Heading size="md" mb={4}>Status</Heading>
@@ -338,6 +468,12 @@ const ProdutoDetalhe = () => {
                   <Text fontWeight="bold">Bloqueado</Text>
                   <Badge colorScheme={produto.bloqueado === 'N' ? 'green' : 'red'}>
                     {produto.bloqueado === 'N' ? 'Não' : 'Sim'}
+                  </Badge>
+                </Box>
+                <Box>
+                  <Text fontWeight="bold">Bloquear Exclusão</Text>
+                  <Badge colorScheme={produto.bloquear_exclusao === 'N' ? 'green' : 'red'}>
+                    {produto.bloquear_exclusao === 'N' ? 'Não' : 'Sim'}
                   </Badge>
                 </Box>
                 <Box>

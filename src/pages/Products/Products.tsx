@@ -173,27 +173,40 @@ const Products = () => {
                               borderRadius="5px"
                               overflow="hidden"
                               bg="gray.100"
+                              flexShrink={0}
+                              position="relative"
                             >
                               {produto.imagens && produto.imagens.length > 0 ? (
                                 <Image
                                   src={produto.imagens[0]?.url_imagem}
                                   alt={produto.descricao}
-                                  width="50px"
-                                  height="50px"
+                                  position="absolute"
+                                  top="0"
+                                  left="0"
+                                  width="100%"
+                                  height="100%"
                                   objectFit="cover"
+                                  display="block"
                                   onError={(e) => {
                                     console.error('Erro ao carregar imagem:', produto.imagens?.[0]?.url_imagem);
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
                                   }}
                                   fallback={
-                                    <Center width="50px" height="50px">
+                                    <Center width="100%" height="100%">
                                       <Icon as={FiImage} color="gray.400" />
                                     </Center>
                                   }
+                                  sx={{
+                                    aspectRatio: '1/1',
+                                    minWidth: '50px',
+                                    minHeight: '50px',
+                                    maxWidth: '50px',
+                                    maxHeight: '50px'
+                                  }}
                                 />
                               ) : (
-                                <Center width="50px" height="50px">
+                                <Center width="100%" height="100%">
                                   <Icon as={FiImage} color="gray.400" />
                                 </Center>
                               )}

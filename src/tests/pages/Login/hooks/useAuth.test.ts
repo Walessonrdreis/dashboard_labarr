@@ -4,9 +4,11 @@ import { useAuth } from '../../../../pages/Login/hooks/useAuth';
 import { authService } from '../../../../pages/Login/services/authService';
 import { ERROR_MESSAGES } from '../../../../pages/Login/utils/constants';
 
+const mockNavigate = vi.fn();
+
 // Mock do useNavigate
 vi.mock('react-router-dom', () => ({
-  useNavigate: () => vi.fn()
+  useNavigate: () => mockNavigate
 }));
 
 // Mock do authService
@@ -32,11 +34,12 @@ describe('useAuth', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockClear();
   });
 
   describe('Login', () => {
     it('deve realizar login com sucesso', async () => {
-      (authService.login as jest.Mock).mockResolvedValue({ user: mockUser });
+      (authService.login as jest.Mock).mockResolvedValue({ user: mockUser, token: 'token-123' });
       
       const { result } = renderHook(() => useAuth());
 
@@ -47,11 +50,18 @@ describe('useAuth', () => {
       expect(result.current.user).toEqual(mockUser);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.error).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
     it('deve lidar com erro de login', async () => {
-      const errorMessage = ERROR_MESSAGES.INVALID_CREDENTIALS;
-      (authService.login as jest.Mock).mockRejectedValue(new Error(errorMessage));
+      const errorResponse = {
+        response: {
+          data: {
+            message: ERROR_MESSAGES.INVALID_CREDENTIALS
+          }
+        }
+      };
+      (authService.login as jest.Mock).mockRejectedValue(errorResponse);
       
       const { result } = renderHook(() => useAuth());
 
@@ -59,25 +69,33 @@ describe('useAuth', () => {
         await result.current.login(mockCredentials);
       });
 
-      expect(result.current.error).toBe(errorMessage);
+      expect(result.current.error).toBe(ERROR_MESSAGES.INVALID_CREDENTIALS);
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.user).toBeNull();
     });
 
     it('deve atualizar estado de loading durante o login', async () => {
-      (authService.login as jest.Mock).mockImplementation(() => new Promise(resolve => {
-        setTimeout(() => resolve({ user: mockUser }), 100);
-      }));
+      let resolveLogin: (value: { user: typeof mockUser; token: string }) => void;
+      const loginPromise = new Promise<{ user: typeof mockUser; token: string }>(resolve => {
+        resolveLogin = resolve;
+      });
+      
+      (authService.login as jest.Mock).mockReturnValue(loginPromise);
       
       const { result } = renderHook(() => useAuth());
 
-      const loginPromise = act(async () => {
-        await result.current.login(mockCredentials);
+      let promise: Promise<void>;
+      act(() => {
+        promise = result.current.login(mockCredentials);
       });
-
+      
       expect(result.current.isLoading).toBe(true);
 
-      await loginPromise;
+      await act(async () => {
+        resolveLogin!({ user: mockUser, token: 'token-123' });
+        await promise;
+      });
+
       expect(result.current.isLoading).toBe(false);
     });
   });
@@ -101,11 +119,18 @@ describe('useAuth', () => {
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.error).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
 
     it('deve lidar com erro no logout', async () => {
-      const errorMessage = ERROR_MESSAGES.SERVER_ERROR;
-      (authService.logout as jest.Mock).mockRejectedValue(new Error(errorMessage));
+      const errorResponse = {
+        response: {
+          data: {
+            message: ERROR_MESSAGES.SERVER_ERROR
+          }
+        }
+      };
+      (authService.logout as jest.Mock).mockRejectedValue(errorResponse);
       
       const { result } = renderHook(() => useAuth());
 
@@ -119,7 +144,7 @@ describe('useAuth', () => {
         await result.current.logout();
       });
 
-      expect(result.current.error).toBe(errorMessage);
+      expect(result.current.error).toBe(ERROR_MESSAGES.SERVER_ERROR);
     });
   });
 

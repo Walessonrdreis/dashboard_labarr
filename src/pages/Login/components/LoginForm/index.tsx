@@ -57,10 +57,9 @@ const LoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={PLACEHOLDERS.EMAIL}
-            aria-describedby={emailError ? "email-error" : undefined}
           />
           {emailError && (
-            <FormErrorMessage id="email-error">{emailError}</FormErrorMessage>
+            <FormErrorMessage role="alert">{emailError}</FormErrorMessage>
           )}
         </FormControl>
 
@@ -71,10 +70,9 @@ const LoginForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={PLACEHOLDERS.PASSWORD}
-            aria-describedby={passwordError ? "password-error" : undefined}
           />
           {passwordError && (
-            <FormErrorMessage id="password-error">{passwordError}</FormErrorMessage>
+            <FormErrorMessage role="alert">{passwordError}</FormErrorMessage>
           )}
         </FormControl>
 
@@ -90,7 +88,7 @@ const LoginForm = () => {
           </Link>
         </HStack>
 
-        {error && <ErrorMessage message={error} />}
+        {error && <ErrorMessage message={error} role="alert" />}
 
         <Button
           type="submit"

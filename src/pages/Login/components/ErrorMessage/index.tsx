@@ -7,9 +7,10 @@ import {
 
 interface ErrorMessageProps {
   message: string;
+  role?: string;
 }
 
-const ErrorMessage = ({ message }: ErrorMessageProps) => {
+const ErrorMessage = ({ message, role = 'alert' }: ErrorMessageProps) => {
   const bgColor = useColorModeValue('red.50', 'red.900');
   const textColor = useColorModeValue('red.600', 'red.200');
 
@@ -20,6 +21,7 @@ const ErrorMessage = ({ message }: ErrorMessageProps) => {
       bg={bgColor}
       rounded="md"
       alignItems="center"
+      role={role}
     >
       <AlertIcon color={textColor} />
       <AlertDescription color={textColor}>{message}</AlertDescription>

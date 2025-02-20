@@ -58,28 +58,26 @@ describe('LoginForm', () => {
       renderLoginForm();
 
       const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
-      
       const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+      fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(ERROR_MESSAGES.INVALID_EMAIL)).toBeInTheDocument();
-      });
+      const errorMessage = await screen.findByText(ERROR_MESSAGES.INVALID_EMAIL);
+      expect(errorMessage).toBeInTheDocument();
     });
 
     it('deve validar senha muito curta', async () => {
       renderLoginForm();
 
       const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      fireEvent.change(passwordInput, { target: { value: '123' } });
-      
       const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+      fireEvent.change(passwordInput, { target: { value: '123' } });
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(ERROR_MESSAGES.MIN_PASSWORD_LENGTH)).toBeInTheDocument();
-      });
+      const errorMessage = await screen.findByText(ERROR_MESSAGES.MIN_PASSWORD_LENGTH);
+      expect(errorMessage).toBeInTheDocument();
     });
 
     it('deve validar campos obrigatórios', async () => {
@@ -88,10 +86,11 @@ describe('LoginForm', () => {
       const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(ERROR_MESSAGES.REQUIRED_EMAIL)).toBeInTheDocument();
-        expect(screen.getByText(ERROR_MESSAGES.REQUIRED_PASSWORD)).toBeInTheDocument();
-      });
+      const emailError = await screen.findByText(ERROR_MESSAGES.REQUIRED_EMAIL);
+      const passwordError = await screen.findByText(ERROR_MESSAGES.REQUIRED_PASSWORD);
+
+      expect(emailError).toBeInTheDocument();
+      expect(passwordError).toBeInTheDocument();
     });
   });
 
@@ -121,16 +120,18 @@ describe('LoginForm', () => {
 
       const emailInput = screen.getByLabelText(LABELS.EMAIL);
       const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      
+      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
       fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
       fireEvent.change(passwordInput, { target: { value: '123' } });
-      
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
       fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(mockLogin).not.toHaveBeenCalled();
-      });
+      const emailError = await screen.findByText(ERROR_MESSAGES.INVALID_EMAIL);
+      const passwordError = await screen.findByText(ERROR_MESSAGES.MIN_PASSWORD_LENGTH);
+
+      expect(emailError).toBeInTheDocument();
+      expect(passwordError).toBeInTheDocument();
+      expect(mockLogin).not.toHaveBeenCalled();
     });
   });
 
@@ -149,7 +150,7 @@ describe('LoginForm', () => {
       expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
-    it('deve mostrar mensagem de erro da API', () => {
+    it('deve mostrar mensagem de erro da API', async () => {
       (useAuth as jest.Mock).mockImplementation(() => ({
         login: mockLogin,
         isLoading: false,
@@ -159,7 +160,8 @@ describe('LoginForm', () => {
 
       renderLoginForm();
 
-      expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
+      const errorMessage = await screen.findByText(ERROR_MESSAGES.INVALID_CREDENTIALS);
+      expect(errorMessage).toBeInTheDocument();
     });
 
     it('deve limpar erro ao tentar novo login', async () => {

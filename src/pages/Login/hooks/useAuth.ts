@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginCredentials, User } from '../types/Auth';
 import { authService } from '../services/authService';
-import { getAuthToken, getUserData } from '../utils/storage';
+import { getAuthToken, getUserData, setAuthToken, setUserData, removeAuthToken, removeUserData } from '../utils/storage';
 import { formatErrorMessage } from '../utils/helpers';
 
 export const useAuth = () => {
@@ -13,55 +13,70 @@ export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
 
   const login = useCallback(async (credentials: LoginCredentials) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
       const response = await authService.login(credentials);
-      
+      setAuthToken(response.token);
+      setUserData(response.user);
       setUser(response.user);
       setIsAuthenticated(true);
       navigate('/');
     } catch (err) {
-      setError(formatErrorMessage(err));
+      const errorMessage = formatErrorMessage(err);
+      setError(errorMessage);
       setIsAuthenticated(false);
+      setUser(null);
+      removeAuthToken();
+      removeUserData();
     } finally {
       setIsLoading(false);
     }
   }, [navigate]);
 
   const logout = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
       await authService.logout();
-      
       setUser(null);
       setIsAuthenticated(false);
+      removeAuthToken();
+      removeUserData();
       navigate('/login');
     } catch (err) {
-      setError(formatErrorMessage(err));
+      const errorMessage = formatErrorMessage(err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   }, [navigate]);
 
   const checkAuth = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
       const isValid = await authService.validateToken();
       
       if (!isValid) {
         setUser(null);
         setIsAuthenticated(false);
+        removeAuthToken();
+        removeUserData();
         navigate('/login');
+      } else {
+        setIsAuthenticated(true);
       }
     } catch (err) {
-      setError(formatErrorMessage(err));
+      const errorMessage = formatErrorMessage(err);
+      setError(errorMessage);
       setIsAuthenticated(false);
+      setUser(null);
+      removeAuthToken();
+      removeUserData();
       navigate('/login');
     } finally {
       setIsLoading(false);

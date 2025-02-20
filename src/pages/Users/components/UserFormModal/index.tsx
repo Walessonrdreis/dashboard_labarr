@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   Modal,
   ModalOverlay,
@@ -15,7 +16,6 @@ import {
   Select,
   VStack,
   Text,
-  useForm,
 } from '@chakra-ui/react';
 import { User, UserFormData, UserRole, UserStatus } from '../../types/User';
 import { LABELS, ERROR_MESSAGES, USER_ROLES, USER_STATUS } from '../../constants/userConstants';

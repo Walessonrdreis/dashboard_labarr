@@ -6,12 +6,19 @@ export const formatUserName = (firstName?: string, lastName?: string): string =>
   return parts.map(part => part?.trim()).join(' ');
 };
 
-export const formatDate = (date?: string): string => {
+export const formatDate = (date: string | undefined): string => {
   if (!date) return '';
   
   try {
-    const d = new Date(date);
-    return d.toLocaleDateString('pt-BR');
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) return '';
+    
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC'
+    }).format(parsedDate);
   } catch {
     return '';
   }
@@ -26,13 +33,25 @@ export const validateEmail = (email?: string): boolean => {
 export const validateUser = (user: any): boolean => {
   if (!user) return false;
 
-  const requiredFields = ['nome', 'email', 'cargo', 'status'];
-  const hasAllFields = requiredFields.every(field => Boolean(user[field]));
-  
-  if (!hasAllFields) return false;
-  if (!validateEmail(user.email)) return false;
-  if (!Object.keys(USER_ROLES).includes(user.cargo)) return false;
-  if (!Object.keys(USER_STATUS).includes(user.status)) return false;
+  // Validação dos campos obrigatórios
+  if (!user.nome?.trim() || !user.email?.trim()) {
+    return false;
+  }
+
+  // Validação do email
+  if (!validateEmail(user.email)) {
+    return false;
+  }
+
+  // Validação do cargo
+  if (user.cargo && !Object.keys(USER_ROLES).includes(user.cargo)) {
+    return false;
+  }
+
+  // Validação do status
+  if (user.status && !Object.keys(USER_STATUS).includes(user.status)) {
+    return false;
+  }
 
   return true;
 };
@@ -42,15 +61,13 @@ export const sortUsers = <T extends User>(
   field: keyof T,
   direction: 'asc' | 'desc'
 ): T[] => {
-  const sorted = [...users].sort((a, b) => {
-    const valueA = String(a[field]).toLowerCase();
-    const valueB = String(b[field]).toLowerCase();
-    return direction === 'asc'
-      ? valueA.localeCompare(valueB)
-      : valueB.localeCompare(valueA);
+  return [...users].sort((a, b) => {
+    const valueA = String(a[field] || '').toLowerCase();
+    const valueB = String(b[field] || '').toLowerCase();
+    
+    const comparison = valueA.localeCompare(valueB, 'pt-BR');
+    return direction === 'asc' ? comparison : -comparison;
   });
-
-  return sorted;
 };
 
 export const filterUsers = <T extends User>(
@@ -68,14 +85,18 @@ export const filterUsers = <T extends User>(
   });
 };
 
-export const formatUserRole = (role?: UserRole): string => {
+export const formatUserRole = (role: string | undefined): string => {
   if (!role) return 'Desconhecido';
-  return USER_ROLES[role as UserRole] || 'Desconhecido';
+  
+  const normalizedRole = role.toUpperCase();
+  return USER_ROLES[normalizedRole as UserRole] || 'Desconhecido';
 };
 
-export const formatUserStatus = (status?: UserStatus): string => {
+export const formatUserStatus = (status: string | undefined): string => {
   if (!status) return 'Desconhecido';
-  return USER_STATUS[status as UserStatus] || 'Desconhecido';
+  
+  const normalizedStatus = status.toUpperCase();
+  return USER_STATUS[normalizedStatus as UserStatus] || 'Desconhecido';
 };
 
 export const paginateUsers = <T>(

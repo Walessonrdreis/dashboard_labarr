@@ -10,7 +10,7 @@ const mockUsers = [
     nome: 'João Silva',
     email: 'joao@exemplo.com',
     cargo: 'Administrador',
-    status: 'Ativo',
+    status: 'active',
     ultimoAcesso: '2024-02-19',
   },
   {
@@ -18,7 +18,7 @@ const mockUsers = [
     nome: 'Maria Santos',
     email: 'maria@exemplo.com',
     cargo: 'Usuário',
-    status: 'Ativo',
+    status: 'active',
     ultimoAcesso: '2024-02-18',
   },
   {
@@ -26,7 +26,7 @@ const mockUsers = [
     nome: 'Pedro Costa',
     email: 'pedro@exemplo.com',
     cargo: 'Usuário',
-    status: 'Inativo',
+    status: 'inactive',
     ultimoAcesso: '2024-02-15',
   },
 ];
@@ -40,8 +40,8 @@ const renderUserList = (props = {}) => {
     <ChakraProvider theme={theme}>
       <UserList
         users={mockUsers}
-        currentPage={1}
-        totalPages={1}
+        currentPage={2}
+        totalPages={3}
         onPageChange={mockOnPageChange}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
@@ -80,8 +80,8 @@ describe('UserList', () => {
     it('deve renderizar os botões de ação para cada usuário', () => {
       renderUserList();
       
-      const editButtons = screen.getAllByText('Editar');
-      const deleteButtons = screen.getAllByText('Remover');
+      const editButtons = screen.getAllByLabelText('Editar Usuário');
+      const deleteButtons = screen.getAllByLabelText('Excluir Usuário');
 
       expect(editButtons).toHaveLength(mockUsers.length);
       expect(deleteButtons).toHaveLength(mockUsers.length);
@@ -90,35 +90,35 @@ describe('UserList', () => {
 
   describe('Paginação', () => {
     it('deve renderizar os controles de paginação', () => {
-      renderUserList({ totalPages: 3, currentPage: 2 });
+      renderUserList();
       
-      expect(screen.getByText('Anterior')).toBeInTheDocument();
-      expect(screen.getByText('Próxima')).toBeInTheDocument();
-      expect(screen.getByText('2')).toBeInTheDocument();
+      expect(screen.getByLabelText('Página anterior')).toBeInTheDocument();
+      expect(screen.getByLabelText('Próxima página')).toBeInTheDocument();
+      expect(screen.getByText('Página 2 de 3')).toBeInTheDocument();
     });
 
     it('deve chamar onPageChange ao clicar nos botões de paginação', () => {
       renderUserList({ totalPages: 3, currentPage: 2 });
       
-      fireEvent.click(screen.getByText('Próxima'));
+      fireEvent.click(screen.getByLabelText('Próxima página'));
       expect(mockOnPageChange).toHaveBeenCalledWith(3);
 
-      fireEvent.click(screen.getByText('Anterior'));
+      fireEvent.click(screen.getByLabelText('Página anterior'));
       expect(mockOnPageChange).toHaveBeenCalledWith(1);
     });
 
     it('deve desabilitar botão "Anterior" na primeira página', () => {
       renderUserList({ totalPages: 3, currentPage: 1 });
       
-      expect(screen.getByText('Anterior')).toBeDisabled();
-      expect(screen.getByText('Próxima')).not.toBeDisabled();
+      expect(screen.getByLabelText('Página anterior')).toBeDisabled();
+      expect(screen.getByLabelText('Próxima página')).not.toBeDisabled();
     });
 
     it('deve desabilitar botão "Próxima" na última página', () => {
       renderUserList({ totalPages: 3, currentPage: 3 });
       
-      expect(screen.getByText('Anterior')).not.toBeDisabled();
-      expect(screen.getByText('Próxima')).toBeDisabled();
+      expect(screen.getByLabelText('Página anterior')).not.toBeDisabled();
+      expect(screen.getByLabelText('Próxima página')).toBeDisabled();
     });
   });
 
@@ -126,7 +126,7 @@ describe('UserList', () => {
     it('deve chamar onEdit ao clicar no botão de editar', () => {
       renderUserList();
       
-      const editButtons = screen.getAllByText('Editar');
+      const editButtons = screen.getAllByLabelText('Editar Usuário');
       fireEvent.click(editButtons[0]);
 
       expect(mockOnEdit).toHaveBeenCalledWith(mockUsers[0]);
@@ -135,7 +135,7 @@ describe('UserList', () => {
     it('deve chamar onDelete ao clicar no botão de remover', () => {
       renderUserList();
       
-      const deleteButtons = screen.getAllByText('Remover');
+      const deleteButtons = screen.getAllByLabelText('Excluir Usuário');
       fireEvent.click(deleteButtons[0]);
 
       expect(mockOnDelete).toHaveBeenCalledWith(mockUsers[0]);
@@ -161,13 +161,12 @@ describe('UserList', () => {
     it('deve ordenar usuários por nome quando clicar no cabeçalho da coluna', () => {
       renderUserList();
       
-      const nomeHeader = screen.getByText('Nome');
+      const nomeHeader = screen.getByRole('columnheader', { name: /nome/i });
       fireEvent.click(nomeHeader);
 
-      // Verifica se os usuários estão ordenados alfabeticamente
       const userNames = screen.getAllByTestId('user-name')
         .map(element => element.textContent);
-      const sortedNames = [...userNames].sort();
+      const sortedNames = ['João Silva', 'Maria Santos', 'Pedro Costa'];
       
       expect(userNames).toEqual(sortedNames);
     });
@@ -175,21 +174,19 @@ describe('UserList', () => {
     it('deve alternar entre ordenação ascendente e descendente', () => {
       renderUserList();
       
-      const nomeHeader = screen.getByText('Nome');
+      const nameHeader = screen.getByRole('columnheader', { name: /nome/i });
       
-      // Primeiro clique - ordem ascendente
-      fireEvent.click(nomeHeader);
+      // Primeira clicada - ordem ascendente
+      fireEvent.click(nameHeader);
       let userNames = screen.getAllByTestId('user-name')
         .map(element => element.textContent);
-      let sortedNames = [...userNames].sort();
-      expect(userNames).toEqual(sortedNames);
+      expect(userNames).toEqual(['João Silva', 'Maria Santos', 'Pedro Costa']);
 
-      // Segundo clique - ordem descendente
-      fireEvent.click(nomeHeader);
+      // Segunda clicada - ordem descendente
+      fireEvent.click(nameHeader);
       userNames = screen.getAllByTestId('user-name')
         .map(element => element.textContent);
-      sortedNames = [...userNames].sort().reverse();
-      expect(userNames).toEqual(sortedNames);
+      expect(userNames).toEqual(['Pedro Costa', 'Maria Santos', 'João Silva']);
     });
   });
 }); 

@@ -214,40 +214,31 @@ describe('userService', () => {
   });
 
   describe('Tratamento de Erros', () => {
-    it('deve formatar erros da API', async () => {
-      const apiError = {
-        response: {
-          data: {
-            message: 'Erro específico da API',
-            errors: ['Campo inválido']
-          }
-        }
-      };
-
-      (api.post as jest.Mock).mockRejectedValue(apiError);
-
-      await expect(userService.createUser({
-        nome: 'Teste',
-        email: 'teste@exemplo.com',
-        cargo: 'Usuário',
-        status: 'Ativo'
-      })).rejects.toThrow('Erro específico da API');
-    });
-
     it('deve lidar com timeout da API', async () => {
-      const timeoutError = new Error('Timeout');
-      timeoutError.name = 'TimeoutError';
-      
+      const timeoutError = { code: 'ECONNABORTED' };
       (api.get as jest.Mock).mockRejectedValue(timeoutError);
 
       await expect(userService.getUsers()).rejects.toThrow('Timeout');
     });
 
     it('deve lidar com erro de rede', async () => {
-      const networkError = new Error('Network Error');
+      const networkError = { message: 'Network Error' };
       (api.get as jest.Mock).mockRejectedValue(networkError);
 
       await expect(userService.getUsers()).rejects.toThrow('Network Error');
+    });
+
+    it('deve lidar com erro específico da API', async () => {
+      const apiError = {
+        response: {
+          data: {
+            message: 'Erro específico da API'
+          }
+        }
+      };
+      (api.get as jest.Mock).mockRejectedValue(apiError);
+
+      await expect(userService.getUsers()).rejects.toThrow('Erro específico da API');
     });
   });
 }); 

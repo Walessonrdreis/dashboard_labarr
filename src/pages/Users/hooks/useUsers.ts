@@ -1,20 +1,34 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, UserFormData, UserStatus } from '../types/User';
 import { userService } from '../services/userService';
 import { ITEMS_PER_PAGE } from '../constants/userConstants';
 
 export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('');
+  const loadingRef = useRef(0);
+
+  const startLoading = () => {
+    loadingRef.current += 1;
+    setIsLoading(true);
+  };
+
+  const stopLoading = () => {
+    loadingRef.current -= 1;
+    if (loadingRef.current <= 0) {
+      loadingRef.current = 0;
+      setIsLoading(false);
+    }
+  };
 
   const fetchUsers = useCallback(async () => {
     try {
-      setIsLoading(true);
+      startLoading();
       setError(null);
 
       const response = await userService.getUsers({
@@ -30,7 +44,7 @@ export const useUsers = () => {
       setError(err.message);
       setUsers([]);
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
   }, [currentPage, searchTerm, statusFilter]);
 
@@ -40,38 +54,49 @@ export const useUsers = () => {
 
   const createUser = async (userData: UserFormData): Promise<void> => {
     try {
+      startLoading();
       setError(null);
       await userService.createUser(userData);
-      fetchUsers();
+      setCurrentPage(1); // Reset para primeira página
+      await fetchUsers();
     } catch (err: any) {
       setError(err.message);
       throw err;
+    } finally {
+      stopLoading();
     }
   };
 
   const updateUser = async (user: User): Promise<void> => {
     try {
+      startLoading();
       setError(null);
       await userService.updateUser(user);
-      fetchUsers();
+      await fetchUsers();
     } catch (err: any) {
       setError(err.message);
       throw err;
+    } finally {
+      stopLoading();
     }
   };
 
   const deleteUser = async (userId: number): Promise<void> => {
     try {
+      startLoading();
       setError(null);
       await userService.deleteUser(userId);
-      fetchUsers();
+      await fetchUsers();
     } catch (err: any) {
       setError(err.message);
       throw err;
+    } finally {
+      stopLoading();
     }
   };
 
   const setPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
   };
 

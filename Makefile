@@ -1,11 +1,27 @@
-.PHONY: install dev build test coverage test-ui lint preview
+.PHONY: install dev build test coverage test-ui lint preview check-deps check-env
 
-# Instala todas as dependências
-install:
+# Verifica se o arquivo .env existe
+check-env:
+	@test -f .env || cp .env.example .env
+
+# Verifica se o Node.js e Yarn estão instalados
+check-deps:
+	@command -v node >/dev/null 2>&1 || { echo "Node.js não está instalado. Por favor, instale o Node.js LTS"; exit 1; }
+	@command -v yarn >/dev/null 2>&1 || { echo "Yarn não está instalado. Instalando..."; npm install -g yarn; }
+
+# Instala todas as dependências (com verificação)
+install: check-deps check-env
+	yarn install
+
+# Limpa cache e node_modules e reinstala tudo
+clean-install: check-deps
+	rm -rf node_modules
+	rm -rf yarn.lock
+	yarn cache clean
 	yarn install
 
 # Inicia o servidor de desenvolvimento
-dev:
+dev: check-deps
 	yarn dev
 
 # Executa o build do projeto
@@ -33,6 +49,6 @@ preview:
 	yarn preview
 
 # Comando para iniciar tudo que precisa para desenvolvimento
-start:
+start: check-deps check-env
 	make install
 	make dev 

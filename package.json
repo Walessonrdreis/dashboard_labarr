@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "credentials": "ts-node src/scripts/manageCredentials.ts"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",
@@ -19,6 +20,7 @@
     "@emotion/styled": "^11.11.0",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
     "framer-motion": "^10.18.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -28,9 +30,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/dotenv": "^8.2.3",
     "@types/jest": "^29.5.14",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",

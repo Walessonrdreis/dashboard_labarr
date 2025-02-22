@@ -43,325 +43,344 @@ describe('Página de Login', () => {
       error: null,
       clearError: vi.fn()
     }));
+
+    // Limpa localStorage e mocks
+    localStorage.clear();
+    vi.clearAllMocks();
   });
 
-  describe('Renderização', () => {
-    it('deve renderizar o título e subtítulo corretamente', () => {
-      renderLoginPage();
-      
-      expect(screen.getByText('Bem-vindo de volta!')).toBeInTheDocument();
-      expect(
-        screen.getByText('Faça login para acessar o painel administrativo')
-      ).toBeInTheDocument();
-    });
-
-    it('deve renderizar todos os campos do formulário', () => {
-      renderLoginPage();
-      
-      expect(screen.getByLabelText(LABELS.EMAIL)).toBeInTheDocument();
-      expect(screen.getByLabelText(LABELS.PASSWORD)).toBeInTheDocument();
-      expect(screen.getByLabelText(LABELS.REMEMBER_ME)).toBeInTheDocument();
-      expect(screen.getByText(LABELS.FORGOT_PASSWORD)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: LABELS.LOGIN_BUTTON })).toBeInTheDocument();
-    });
-
-    it('deve renderizar o logo', () => {
-      renderLoginPage();
-      
-      const logo = screen.getByAltText('Dashboard Lab');
-      expect(logo).toBeInTheDocument();
-      expect(logo).toHaveAttribute('src', '/logo.png');
-    });
+  it('deve renderizar o título corretamente', () => {
+    renderLoginPage();
+    expect(screen.getByText('Bem-vindo de volta!')).toBeInTheDocument();
   });
 
-  describe('Validação do Formulário', () => {
-    it('deve mostrar erro quando o email é inválido', async () => {
-      renderLoginPage();
-      
-      const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
-
-      fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
-      fireEvent.click(submitButton);
-
-      const errorMessage = await screen.findByText(ERROR_MESSAGES.INVALID_EMAIL);
-      expect(errorMessage).toBeInTheDocument();
-    });
-
-    it('deve mostrar erro quando a senha é muito curta', async () => {
-      renderLoginPage();
-      
-      const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
-
-      fireEvent.change(passwordInput, { target: { value: '123' } });
-      fireEvent.click(submitButton);
-
-      const errorMessage = await screen.findByText(ERROR_MESSAGES.MIN_PASSWORD_LENGTH);
-      expect(errorMessage).toBeInTheDocument();
-    });
-
-    it('deve mostrar erro quando os campos estão vazios', async () => {
-      renderLoginPage();
-      
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
-      fireEvent.click(submitButton);
-
-      const emailError = await screen.findByText(ERROR_MESSAGES.REQUIRED_EMAIL);
-      const passwordError = await screen.findByText(ERROR_MESSAGES.REQUIRED_PASSWORD);
-
-      expect(emailError).toBeInTheDocument();
-      expect(passwordError).toBeInTheDocument();
-    });
+  it('deve renderizar o subtítulo corretamente', () => {
+    renderLoginPage();
+    expect(
+      screen.getByText('Faça login para acessar o painel administrativo')
+    ).toBeInTheDocument();
   });
 
-  describe('Interação e Estados', () => {
-    it('deve chamar a função login com as credenciais corretas', async () => {
-      const mockLogin = vi.fn();
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: mockLogin,
-        isLoading: false,
-        error: null,
-        clearError: vi.fn()
-      }));
-
-      renderLoginPage();
-      
-      const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
-
-      fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'senha123' } });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(mockLogin).toHaveBeenCalledWith({
-          email: 'teste@exemplo.com',
-          password: 'senha123'
-        });
-      });
-    });
-
-    it('deve mostrar o spinner de loading durante a autenticação', () => {
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: vi.fn(),
-        isLoading: true,
-        error: null,
-        clearError: vi.fn()
-      }));
-
-      renderLoginPage();
-      
-      expect(screen.getByText('Autenticando...')).toBeInTheDocument();
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    });
-
-    it('deve mostrar mensagem de erro quando a autenticação falha', () => {
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: vi.fn(),
-        isLoading: false,
-        error: ERROR_MESSAGES.INVALID_CREDENTIALS,
-        clearError: vi.fn()
-      }));
-
-      renderLoginPage();
-      
-      expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
-    });
-
-    it('deve limpar os erros ao tentar fazer login novamente', async () => {
-      const mockClearError = vi.fn();
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: vi.fn(),
-        isLoading: false,
-        error: ERROR_MESSAGES.INVALID_CREDENTIALS,
-        clearError: mockClearError
-      }));
-
-      renderLoginPage();
-      
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
-      fireEvent.click(submitButton);
-
-      expect(mockClearError).toHaveBeenCalled();
-    });
+  it('deve renderizar o campo de email', () => {
+    renderLoginPage();
+    expect(screen.getByLabelText(LABELS.EMAIL)).toBeInTheDocument();
   });
 
-  describe('Comportamento do "Lembrar-me"', () => {
-    beforeEach(() => {
-      localStorage.clear();
-      vi.clearAllMocks();
-    });
+  it('deve renderizar o campo de senha', () => {
+    renderLoginPage();
+    expect(screen.getByLabelText(LABELS.PASSWORD)).toBeInTheDocument();
+  });
 
-    it('deve permitir marcar e desmarcar a opção "Lembrar-me"', () => {
-      renderLoginPage();
-      
-      const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
-      
-      expect(rememberMeCheckbox).not.toBeChecked();
-      
-      fireEvent.click(rememberMeCheckbox);
-      expect(rememberMeCheckbox).toBeChecked();
-      
-      fireEvent.click(rememberMeCheckbox);
-      expect(rememberMeCheckbox).not.toBeChecked();
-    });
+  it('deve renderizar a opção de lembrar-me', () => {
+    renderLoginPage();
+    expect(screen.getByLabelText(LABELS.REMEMBER_ME)).toBeInTheDocument();
+  });
 
-    it('deve salvar credenciais quando "Lembrar-me" estiver marcado', async () => {
-      // Mock da função de login para simular sucesso
-      const mockLogin = vi.fn().mockResolvedValue({});
-      
-      // Mock do hook useAuth com a função de login mockada
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: mockLogin,
-        isLoading: false,
-        error: null,
-        clearError: vi.fn()
-      }));
+  it('deve renderizar o link de esqueci minha senha', () => {
+    renderLoginPage();
+    expect(screen.getByText(LABELS.FORGOT_PASSWORD)).toBeInTheDocument();
+  });
 
-      renderLoginPage();
-      
-      // Preenche o formulário
-      const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+  it('deve renderizar o botão de login', () => {
+    renderLoginPage();
+    expect(screen.getByRole('button', { name: LABELS.LOGIN_BUTTON })).toBeInTheDocument();
+  });
 
-      fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'senha123' } });
-      fireEvent.click(rememberMeCheckbox);
-      
-      // Submete o formulário
-      await waitFor(() => {
-        fireEvent.click(submitButton);
-      });
+  it('deve renderizar o logo com atributos corretos', () => {
+    renderLoginPage();
+    const logo = screen.getByAltText('Dashboard Lab');
+    expect(logo).toBeInTheDocument();
+    expect(logo).toHaveAttribute('src', '/logo.png');
+  });
 
-      // Verifica se o login foi chamado com os parâmetros corretos
+  it('deve mostrar erro quando o email tem formato inválido', async () => {
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText(LABELS.EMAIL);
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+    fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
+    fireEvent.click(submitButton);
+
+    const errorMessage = await screen.findByText(ERROR_MESSAGES.INVALID_EMAIL);
+    expect(errorMessage).toBeInTheDocument();
+  });
+
+  it('deve mostrar erro quando a senha é menor que o tamanho mínimo', async () => {
+    renderLoginPage();
+    
+    const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+    fireEvent.change(passwordInput, { target: { value: '123' } });
+    fireEvent.click(submitButton);
+
+    const errorMessage = await screen.findByText(ERROR_MESSAGES.MIN_PASSWORD_LENGTH);
+    expect(errorMessage).toBeInTheDocument();
+  });
+
+  it('deve mostrar erro quando o email está vazio', async () => {
+    renderLoginPage();
+    
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+    fireEvent.click(submitButton);
+
+    const emailError = await screen.findByText(ERROR_MESSAGES.REQUIRED_EMAIL);
+    expect(emailError).toBeInTheDocument();
+  });
+
+  it('deve mostrar erro quando a senha está vazia', async () => {
+    renderLoginPage();
+    
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+    fireEvent.click(submitButton);
+
+    const passwordError = await screen.findByText(ERROR_MESSAGES.REQUIRED_PASSWORD);
+    expect(passwordError).toBeInTheDocument();
+  });
+
+  it('deve chamar a função login com as credenciais corretas', async () => {
+    const mockLogin = vi.fn();
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: mockLogin,
+      isLoading: false,
+      error: null,
+      clearError: vi.fn()
+    }));
+
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText(LABELS.EMAIL);
+    const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+    fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'senha123' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
-        email: 'teste@exemplo.com',
-        password: 'senha123',
-        remember: true
-      });
-    });
-  });
-
-  describe('Persistência de Credenciais', () => {
-    it('deve carregar credenciais salvas ao iniciar', () => {
-      const mockLoadCredentials = vi.fn().mockReturnValue({
         email: 'teste@exemplo.com',
         password: 'senha123'
       });
-
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: vi.fn(),
-        isLoading: false,
-        error: null,
-        clearError: vi.fn(),
-        loadCredentials: mockLoadCredentials
-      }));
-
-      renderLoginPage();
-      
-      const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
-
-      expect(mockLoadCredentials).toHaveBeenCalled();
-      expect(emailInput).toHaveValue('teste@exemplo.com');
-      expect(rememberMeCheckbox).toBeChecked();
     });
   });
 
-  describe('Recuperação de Senha', () => {
-    it('deve navegar para página de recuperação ao clicar em "Esqueci minha senha"', () => {
-      renderLoginPage();
-      
-      const forgotPasswordLink = screen.getByText(LABELS.FORGOT_PASSWORD);
-      fireEvent.click(forgotPasswordLink);
+  it('deve exibir indicador de carregamento durante autenticação', () => {
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: vi.fn(),
+      isLoading: true,
+      error: null,
+      clearError: vi.fn()
+    }));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/recuperar-senha');
+    renderLoginPage();
+    
+    expect(screen.getByText('Autenticando...')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('deve exibir mensagem quando autenticação falha', () => {
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: vi.fn(),
+      isLoading: false,
+      error: ERROR_MESSAGES.INVALID_CREDENTIALS,
+      clearError: vi.fn()
+    }));
+
+    renderLoginPage();
+    
+    expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
+  });
+
+  it('deve limpar mensagens de erro ao tentar novo login', async () => {
+    const mockClearError = vi.fn();
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: vi.fn(),
+      isLoading: false,
+      error: ERROR_MESSAGES.INVALID_CREDENTIALS,
+      clearError: mockClearError
+    }));
+
+    renderLoginPage();
+    
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+    fireEvent.click(submitButton);
+
+    expect(mockClearError).toHaveBeenCalled();
+  });
+
+  it('deve iniciar com checkbox "Lembrar-me" desmarcado', () => {
+    renderLoginPage();
+    const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
+    expect(rememberMeCheckbox).not.toBeChecked();
+  });
+
+  it('deve permitir marcar checkbox "Lembrar-me"', () => {
+    renderLoginPage();
+    const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
+    
+    fireEvent.click(rememberMeCheckbox);
+    expect(rememberMeCheckbox).toBeChecked();
+  });
+
+  it('deve permitir desmarcar checkbox "Lembrar-me"', () => {
+    renderLoginPage();
+    const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
+    
+    fireEvent.click(rememberMeCheckbox);
+    fireEvent.click(rememberMeCheckbox);
+    expect(rememberMeCheckbox).not.toBeChecked();
+  });
+
+  it('deve enviar flag remember=true quando "Lembrar-me" estiver marcado', async () => {
+    const mockLogin = vi.fn().mockResolvedValue({});
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: mockLogin,
+      isLoading: false,
+      error: null,
+      clearError: vi.fn()
+    }));
+
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText(LABELS.EMAIL);
+    const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
+    const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME);
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+    fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'senha123' } });
+    fireEvent.click(rememberMeCheckbox);
+    
+    await waitFor(() => {
+      fireEvent.click(submitButton);
+    });
+
+    expect(mockLogin).toHaveBeenCalledWith({
+      email: 'teste@exemplo.com',
+      password: 'senha123',
+      remember: true
     });
   });
 
-  describe('Tentativas de Login', () => {
-    it('deve bloquear login após múltiplas tentativas falhas', async () => {
-      let loginAttempts = 0;
-      const mockLogin = vi.fn().mockImplementation(async () => {
-        loginAttempts++;
-        // Após 3 tentativas, simula bloqueio
-        if (loginAttempts >= 3) {
-          throw new Error(ERROR_MESSAGES.TOO_MANY_ATTEMPTS);
-        }
-        throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
-      });
+  it('deve carregar credenciais salvas ao iniciar a página', () => {
+    // Simula credenciais salvas no localStorage
+    localStorage.setItem('savedCredentials', JSON.stringify({
+      email: 'teste@exemplo.com',
+      password: 'senha123',
+      remember: true
+    }));
 
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: mockLogin,
-        isLoading: false,
-        error: loginAttempts >= 3 ? ERROR_MESSAGES.TOO_MANY_ATTEMPTS : ERROR_MESSAGES.INVALID_CREDENTIALS,
-        clearError: vi.fn(),
-        loginAttempts
-      }));
+    const mockLoadCredentials = vi.fn().mockReturnValue({
+      email: 'teste@exemplo.com',
+      password: 'senha123'
+    });
 
-      renderLoginPage();
-      
-      const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: vi.fn(),
+      isLoading: false,
+      error: null,
+      clearError: vi.fn(),
+      loadCredentials: mockLoadCredentials
+    }));
 
-      // Primeira tentativa
-      fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'senha_errada' } });
-      fireEvent.click(submitButton);
-      
-      await waitFor(() => {
-        expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
-      });
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText(LABELS.EMAIL) as HTMLInputElement;
+    const rememberMeCheckbox = screen.getByLabelText(LABELS.REMEMBER_ME) as HTMLInputElement;
 
-      // Segunda tentativa
-      fireEvent.click(submitButton);
-      await waitFor(() => {
-        expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
-      });
+    expect(mockLoadCredentials).toHaveBeenCalled();
+    expect(emailInput.value).toBe('teste@exemplo.com');
+    expect(rememberMeCheckbox.checked).toBe(true);
+  });
 
-      // Terceira tentativa - deve bloquear
-      fireEvent.click(submitButton);
-      
-      // Verifica se mostra mensagem de bloqueio e desabilita o botão
-      await waitFor(() => {
-        expect(screen.getByText(ERROR_MESSAGES.TOO_MANY_ATTEMPTS)).toBeInTheDocument();
-        expect(submitButton).toBeDisabled();
-      });
+  it('deve navegar para página de recuperação ao clicar em "Esqueci minha senha"', () => {
+    renderLoginPage();
+    
+    const forgotPasswordLink = screen.getByText(LABELS.FORGOT_PASSWORD);
+    fireEvent.click(forgotPasswordLink);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/recuperar-senha');
+  });
+
+  it('deve bloquear login após três tentativas falhas', async () => {
+    let loginAttempts = 0;
+    const mockLogin = vi.fn().mockImplementation(async () => {
+      loginAttempts++;
+      if (loginAttempts >= 3) {
+        throw new Error(ERROR_MESSAGES.TOO_MANY_ATTEMPTS);
+      }
+      throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
+    });
+
+    const mockClearError = vi.fn();
+    
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: mockLogin,
+      isLoading: false,
+      error: loginAttempts >= 3 ? ERROR_MESSAGES.TOO_MANY_ATTEMPTS : ERROR_MESSAGES.INVALID_CREDENTIALS,
+      clearError: mockClearError,
+      loginAttempts
+    }));
+
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText(LABELS.EMAIL);
+    const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+
+    // Preenche os campos uma única vez
+    fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'senha_errada' } });
+
+    // Primeira tentativa
+    fireEvent.click(submitButton);
+    await waitFor(() => {
+      expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
+      expect(mockClearError).toHaveBeenCalled();
+    });
+
+    // Segunda tentativa
+    fireEvent.click(submitButton);
+    await waitFor(() => {
+      expect(screen.getByText(ERROR_MESSAGES.INVALID_CREDENTIALS)).toBeInTheDocument();
+      expect(mockClearError).toHaveBeenCalledTimes(2);
+    });
+
+    // Terceira tentativa - deve bloquear
+    fireEvent.click(submitButton);
+    await waitFor(() => {
+      expect(screen.getByText(ERROR_MESSAGES.TOO_MANY_ATTEMPTS)).toBeInTheDocument();
+      expect(submitButton).toBeDisabled();
+      expect(mockClearError).toHaveBeenCalledTimes(3);
     });
   });
 
-  describe('Redirecionamento', () => {
-    it('deve redirecionar para última página acessada após login', async () => {
-      const mockLogin = vi.fn().mockResolvedValue({});
-      
-      (useAuth as jest.Mock).mockImplementation(() => ({
-        login: mockLogin,
-        isLoading: false,
-        error: null,
-        clearError: vi.fn()
-      }));
+  it('deve redirecionar para última página acessada após login bem-sucedido', async () => {
+    const mockLogin = vi.fn().mockResolvedValue({});
+    
+    (useAuth as jest.Mock).mockImplementation(() => ({
+      login: mockLogin,
+      isLoading: false,
+      error: null,
+      clearError: vi.fn()
+    }));
 
-      // Simula última página acessada
-      sessionStorage.setItem('lastPath', '/dashboard/relatorios');
-      
-      renderLoginPage();
-      
-      const emailInput = screen.getByLabelText(LABELS.EMAIL);
-      const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
-      const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
+    sessionStorage.setItem('lastPath', '/dashboard/relatorios');
+    
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText(LABELS.EMAIL);
+    const passwordInput = screen.getByLabelText(LABELS.PASSWORD);
+    const submitButton = screen.getByRole('button', { name: LABELS.LOGIN_BUTTON });
 
-      fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'senha123' } });
-      fireEvent.click(submitButton);
+    fireEvent.change(emailInput, { target: { value: 'teste@exemplo.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'senha123' } });
+    fireEvent.click(submitButton);
 
-      await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/relatorios');
-      });
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/relatorios');
     });
   });
 }); 

@@ -9,7 +9,8 @@ export const ERROR_MESSAGES = {
   MIN_PASSWORD_LENGTH: 'A senha deve ter no mínimo 6 caracteres',
   SERVER_ERROR: 'Erro ao conectar com o servidor',
   NETWORK_ERROR: 'Erro de conexão. Verifique sua internet',
-};
+  TOO_MANY_ATTEMPTS: 'Muitas tentativas de login. Por favor, tente novamente mais tarde.',
+} as const;
 
 export const LABELS = {
   EMAIL: 'E-mail',

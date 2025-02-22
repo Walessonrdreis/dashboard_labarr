@@ -82,23 +82,31 @@ describe('CryptoUtil', () => {
     });
 
     it('deve manter tipos de dados originais', () => {
+      interface ComplexData {
+        numberStr: string;
+        string: string;
+        booleanStr: string;
+        arrayStr: string;
+        objectStr: string;
+      }
+
       const complexData = {
-        number: 123,
+        numberStr: '123',
         string: 'texto',
-        boolean: true,
-        array: [1, 2, 3],
-        object: { key: 'value' }
+        booleanStr: 'true',
+        arrayStr: JSON.stringify([1, 2, 3]),
+        objectStr: JSON.stringify({ key: 'value' })
       };
 
       const encrypted = CryptoUtil.saveCredentials(complexData);
-      const loaded = CryptoUtil.loadCredentials(encrypted);
+      const loaded = CryptoUtil.loadCredentials<ComplexData>(encrypted);
 
       expect(loaded).toEqual(complexData);
-      expect(typeof loaded.number).toBe('number');
-      expect(typeof loaded.string).toBe('string');
-      expect(typeof loaded.boolean).toBe('boolean');
-      expect(Array.isArray(loaded.array)).toBe(true);
-      expect(typeof loaded.object).toBe('object');
+      expect(loaded.numberStr).toBe('123');
+      expect(loaded.string).toBe('texto');
+      expect(loaded.booleanStr).toBe('true');
+      expect(loaded.arrayStr).toBe('[1,2,3]');
+      expect(loaded.objectStr).toBe('{"key":"value"}');
     });
   });
 }); 

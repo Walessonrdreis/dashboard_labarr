@@ -15,19 +15,19 @@ export class CryptoUtil {
   }
 
   // Salva credenciais criptografadas em um arquivo
-  static saveCredentials(credentials: Record<string, string>): string {
+  static saveCredentials<T>(credentials: T): string {
     const encryptedData = this.encrypt(JSON.stringify(credentials));
     return encryptedData;
   }
 
   // Lê credenciais de um arquivo criptografado
-  static loadCredentials(encryptedData: string): Record<string, string> {
+  static loadCredentials<T>(encryptedData: string): T {
     try {
       const decryptedData = this.decrypt(encryptedData);
       return JSON.parse(decryptedData);
     } catch (error) {
       console.error('Erro ao carregar credenciais:', error);
-      return {};
+      return {} as T;
     }
   }
 } 

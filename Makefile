@@ -8,6 +8,7 @@ check-env:
 check-deps:
 	@command -v node >/dev/null 2>&1 || { echo "Node.js não está instalado. Por favor, instale o Node.js LTS"; exit 1; }
 	@command -v yarn >/dev/null 2>&1 || { echo "Yarn não está instalado. Instalando..."; npm install -g yarn; }
+	@test -d node_modules/dotenv || { echo "Instalando dependências..."; yarn install; }
 
 # Instala todas as dependências (com verificação)
 install: check-deps check-env
